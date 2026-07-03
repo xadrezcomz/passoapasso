@@ -1,0 +1,562 @@
+<!DOCTYPE html>
+<html lang="pt-BR">
+<head>
+<meta charset="UTF-8">
+<meta name="viewport" content="width=device-width, initial-scale=1.0, maximum-scale=1.0, user-scalable=no">
+<title>Xadrez com Z — Lições</title>
+<link rel="preconnect" href="https://fonts.googleapis.com">
+<link rel="preconnect" href="https://fonts.gstatic.com" crossorigin>
+<link href="https://fonts.googleapis.com/css2?family=Playfair+Display:wght@600;700;800&family=DM+Sans:wght@400;500;600;700&display=swap" rel="stylesheet">
+<style>
+  :root{
+    --bg:#0d0d0f; --bg2:#15151a; --card:#1a1a20; --line:#2a2a32;
+    --gold:#C9A84C; --gold-soft:#e3c977; --ink:#f4f1ea; --muted:#8c8c98;
+  }
+  *{margin:0;padding:0;box-sizing:border-box;-webkit-tap-highlight-color:transparent}
+  html{-webkit-text-size-adjust:100%}
+  body{
+    background:radial-gradient(ellipse at 50% -5%, #1b1810 0%, var(--bg) 50%);
+    color:var(--ink); font-family:'DM Sans',sans-serif;
+    min-height:100vh; min-height:100dvh; line-height:1.4;
+  }
+  .wrap{width:100%;max-width:1180px;margin:0 auto;padding:18px 16px 24px}
+
+  /* ===== Header ===== */
+  header{display:flex;align-items:center;justify-content:space-between;gap:10px;margin-bottom:16px}
+  .brand{font-family:'Playfair Display',serif;font-weight:700;font-size:1.1rem}
+  .brand .z{color:var(--gold)}
+  .free-btn{
+    border:1px solid var(--gold);color:var(--gold);background:transparent;
+    padding:9px 15px;border-radius:999px;font-weight:600;font-size:.82rem;cursor:pointer;
+    font-family:'DM Sans',sans-serif;transition:.2s;white-space:nowrap;
+  }
+  .free-btn:active{background:var(--gold);color:#15130b}
+
+  /* ===== Hero ===== */
+  .hero{text-align:center;margin:4px 0 18px}
+  .eyebrow{color:var(--gold);font-size:.72rem;letter-spacing:2.5px;text-transform:uppercase;font-weight:600;margin-bottom:8px}
+  h1{font-family:'Playfair Display',serif;font-weight:800;font-size:clamp(1.8rem,7vw,3rem);line-height:1.06;letter-spacing:-.5px}
+  h1 em{font-style:italic;color:var(--gold)}
+  .sub{color:var(--muted);font-size:.95rem;margin-top:10px;max-width:540px;margin-inline:auto}
+
+  /* ===== Jogo / lição da torre ===== */
+  .game{
+    background:linear-gradient(180deg,#1c1810,#141009);
+    border:1px solid var(--line);border-radius:16px;
+    padding:18px;margin-bottom:18px;
+    display:flex;flex-direction:column;align-items:center;text-align:center;gap:12px;
+  }
+  .game h4{font-family:'Playfair Display',serif;font-size:1.15rem}
+  .game .intro{font-size:.85rem;color:var(--muted);max-width:360px}
+  .game .intro b{color:var(--gold-soft)}
+
+  .board{
+    --sq:52px;
+    width:calc(var(--sq)*4);height:calc(var(--sq)*4);
+    display:grid;grid-template-columns:repeat(4,var(--sq));grid-template-rows:repeat(4,var(--sq));
+    border:2px solid var(--gold);border-radius:8px;overflow:hidden;
+    box-shadow:0 12px 32px -14px rgba(0,0,0,.8);touch-action:none;position:relative;
+  }
+  .sq{display:flex;align-items:center;justify-content:center;position:relative}
+  .sq.light{background:#e8dcb5}
+  .sq.dark{background:#7a6a3a}
+  /* casas válidas destacadas */
+  .sq.movable::before{
+    content:"";position:absolute;width:16px;height:16px;border-radius:50%;
+    background:rgba(201,168,76,.5);animation:fade .25s ease;z-index:1;
+  }
+  @keyframes fade{from{opacity:0;transform:scale(.5)}to{opacity:1;transform:scale(1)}}
+  .star{
+    font-size:30px;line-height:1;color:#fff;
+    filter:drop-shadow(0 1px 1px rgba(0,0,0,.9)) drop-shadow(0 0 3px rgba(0,0,0,.7));
+    animation:twinkle 1.6s ease-in-out infinite;pointer-events:none;position:relative;z-index:3;
+  }
+  @keyframes twinkle{0%,100%{transform:scale(1);opacity:.9}50%{transform:scale(1.12);opacity:1}}
+  .star.collected{animation:collect .45s ease forwards}
+  @keyframes collect{0%{transform:scale(1)}40%{transform:scale(1.6) rotate(20deg);opacity:1}100%{transform:scale(0) rotate(90deg);opacity:0}}
+
+  .rook{
+    position:absolute;font-size:40px;line-height:1;cursor:grab;user-select:none;
+    color:#15130b;filter:drop-shadow(0 3px 3px rgba(0,0,0,.5));
+    transition:left .22s cubic-bezier(.4,1.3,.5,1), top .22s cubic-bezier(.4,1.3,.5,1), transform .12s;
+    z-index:5;touch-action:none;
+  }
+  .rook:active{cursor:grabbing}
+  .rook.selected{transform:scale(1.12)}
+
+  /* progresso */
+  .progress-wrap{width:100%;max-width:320px}
+  .progress-msg{font-size:.82rem;color:var(--gold-soft);font-weight:600;margin-bottom:7px;min-height:1.1em}
+  .bar{width:100%;height:9px;background:rgba(255,255,255,.07);border-radius:99px;overflow:hidden}
+  .bar > span{display:block;height:100%;width:0;background:linear-gradient(90deg,var(--gold),var(--gold-soft));border-radius:99px;transition:width .5s cubic-bezier(.4,1.2,.5,1)}
+  .stars-count{font-size:.72rem;color:var(--muted);margin-top:6px}
+  .stars-count b{color:var(--gold)}
+
+  /* card de lições grátis (revelado ao vencer) */
+  .freecard{
+    width:100%;max-width:340px;border:1px dashed var(--line);border-radius:12px;
+    padding:14px;background:rgba(255,255,255,.02);text-align:center;
+    opacity:.45;transition:.4s;scroll-margin-top:14px;
+  }
+  .freecard .lbl{font-size:.7rem;letter-spacing:1.5px;text-transform:uppercase;color:var(--muted)}
+  .freecard .ttl{font-family:'Playfair Display',serif;font-weight:700;font-size:1.1rem;margin:3px 0 4px;color:var(--muted)}
+  .freecard .desc{font-size:.76rem;color:var(--muted);margin-bottom:10px}
+  .freecard .dl{display:none;width:100%;background:var(--gold);border:none;color:#15130b;font-weight:700;padding:13px;border-radius:9px;cursor:pointer;font-family:'DM Sans',sans-serif;font-size:.95rem}
+  .freecard .dl:active{background:var(--gold-soft)}
+  .freecard.win{opacity:1;border-color:var(--gold);background:rgba(201,168,76,.08);animation:pop .45s ease}
+  .freecard.win .ttl,.freecard.win .lbl{color:var(--gold)}
+  .freecard.win .desc{color:#c9c9d2}
+  .freecard.win .dl{display:block}
+  @keyframes pop{0%{transform:scale(.96)}60%{transform:scale(1.03)}100%{transform:scale(1)}}
+
+  /* ===== Copy de venda (substitui o tabuleiro ao concluir) ===== */
+  .pitch{display:none}
+  .pitch .pitch-eyebrow{color:var(--gold);font-size:.7rem;letter-spacing:2px;text-transform:uppercase;font-weight:600;margin-bottom:8px}
+  .pitch h4{font-family:'Playfair Display',serif;font-size:1.25rem;line-height:1.25;font-weight:700;margin-bottom:12px}
+  .pitch h4 em{font-style:italic;color:var(--gold)}
+  .pitch-list{list-style:none;display:flex;flex-direction:column;gap:9px;margin-bottom:14px}
+  .pitch-list li{font-size:.88rem;color:#c9c9d2;display:flex;align-items:flex-start;gap:9px;line-height:1.3;text-align:left}
+  .pitch-list li::before{content:"✓";color:var(--gold);font-weight:700;flex:none}
+  .pitch-cta{font-size:.85rem;color:var(--gold-soft);font-weight:500}
+  /* ao vencer: esconde tabuleiro+intro, mostra a copy */
+  .game.done #board, .game.done #gtext{display:none}
+  .game.done .pitch{display:block;animation:fadeUp .5s ease}
+  @keyframes fadeUp{from{opacity:0;transform:translateY(8px)}to{opacity:1;transform:none}}
+
+  /* ===== Cards de pacotes (carrossel no mobile) ===== */
+  .carousel{position:relative}
+  .carousel.single .grid{justify-content:center;overflow:visible}
+  .carousel.single .card{flex:0 0 auto;width:100%;max-width:360px}
+  .grid{
+    display:flex;gap:14px;
+    overflow-x:auto;scroll-snap-type:x mandatory;
+    -webkit-overflow-scrolling:touch;scrollbar-width:none;
+    padding:14px 2px 4px;margin:0 -16px;padding-inline:16px;
+  }
+  .grid::-webkit-scrollbar{display:none}
+  .card{
+    scroll-snap-align:center;flex:0 0 84%;max-width:340px;
+    background:linear-gradient(180deg,var(--card),var(--bg2));
+    border:1px solid var(--line);border-radius:16px;padding:20px;
+    position:relative;transition:.22s;
+  }
+  .card:active{border-color:var(--gold)}
+  .card .level{font-size:.7rem;letter-spacing:2px;text-transform:uppercase;color:var(--gold);font-weight:600}
+  .card h3{font-family:'Playfair Display',serif;font-size:1.45rem;font-weight:700;margin:2px 0 12px}
+  .price{font-family:'Playfair Display',serif;font-size:1rem;color:var(--muted);margin-bottom:14px}
+  .price b{color:var(--ink);font-size:1.7rem}
+  .price .old{color:var(--muted);font-size:1rem;text-decoration:line-through;text-decoration-color:var(--gold);margin-right:7px;font-weight:600}
+  .buy{
+    width:100%;background:var(--gold);color:#15130b;border:none;border-radius:10px;
+    padding:14px;font-weight:700;font-size:.98rem;cursor:pointer;font-family:'DM Sans',sans-serif;
+    transition:.2s;margin-bottom:14px;
+  }
+  .buy:active{background:var(--gold-soft)}
+  .card.featured{border-color:var(--gold);box-shadow:0 0 0 1px var(--gold),0 18px 44px -22px rgba(201,168,76,.55)}
+  .tag{position:absolute;top:-10px;right:18px;background:var(--gold);color:#15130b;font-size:.66rem;font-weight:700;letter-spacing:1px;padding:4px 11px;border-radius:999px;text-transform:uppercase}
+  .includes{font-size:.78rem;color:var(--gold-soft);font-weight:600;margin-bottom:8px;display:flex;align-items:center;gap:6px}
+  .includes::before{content:"✓";font-weight:700}
+  .lessons{list-style:none;display:flex;flex-direction:column;gap:8px}
+  .lessons li{font-size:.86rem;color:#c9c9d2;display:flex;align-items:center;gap:9px;line-height:1.25}
+  .lessons li::before{content:"";width:6px;height:6px;border-radius:50%;background:var(--gold);flex:none}
+  .more{font-size:.76rem;color:var(--muted);margin-top:8px;padding-left:15px}
+  .more.highlight{
+    text-align:center;padding-left:0;margin-top:14px;
+    font-family:'Playfair Display',serif;font-size:1.35rem;font-weight:700;letter-spacing:.3px;
+    background:linear-gradient(100deg,var(--gold) 20%,#fff6d8 50%,var(--gold) 80%);
+    background-size:200% auto;
+    -webkit-background-clip:text;background-clip:text;
+    -webkit-text-fill-color:transparent;color:transparent;
+    animation:shine 3s linear infinite;
+  }
+  @keyframes shine{to{background-position:200% center}}
+
+  /* indicadores do carrossel */
+  .dots{display:flex;justify-content:center;gap:7px;margin-top:12px}
+  .dots button{width:7px;height:7px;border-radius:50%;border:none;background:var(--line);padding:0;cursor:pointer;transition:.25s}
+  .dots button.active{background:var(--gold);width:20px;border-radius:99px}
+  .swipe-hint{text-align:center;font-size:.72rem;color:var(--muted);margin-top:6px}
+
+  footer{text-align:center;color:var(--muted);font-size:.8rem;margin-top:20px}
+
+  /* ===== Compactar no celular (caber mais na primeira tela) ===== */
+  @media(max-width:600px){
+    .wrap{padding:12px 16px 18px}
+    header{margin-bottom:8px}
+    .hero{margin:2px 0 10px}
+    h1{font-size:1.55rem}
+    .sub{font-size:.84rem;margin-top:6px}
+    .game{padding:11px;margin-bottom:12px;gap:6px}
+    .game h4{font-size:.95rem}
+    .game .intro{font-size:.74rem;line-height:1.28}
+    .board{--sq:37px}
+    .progress-msg{font-size:.76rem;min-height:0}
+    .bar{height:7px}
+    .stars-count{font-size:.68rem;margin-top:4px}
+    .progress-wrap{max-width:260px}
+    /* card de recompensa só aparece depois de vencer, economizando espaço */
+    .freecard{display:none}
+    .game.done .freecard{display:block}
+    /* ao concluir: esconde a barra de progresso (já cumpriu a função) e compacta a copy */
+    .game.done .progress-wrap{display:none}
+    .game.done{gap:10px}
+    .pitch .pitch-eyebrow{margin-bottom:6px}
+    .pitch h4{font-size:1.05rem;margin-bottom:9px}
+    .pitch-list{gap:6px;margin-bottom:10px}
+    .pitch-list li{font-size:.82rem}
+    .pitch-cta{font-size:.8rem}
+    .freecard .ttl{font-size:1.05rem;margin:1px 0 3px}
+    .freecard .desc{font-size:.74rem;margin-bottom:9px}
+    .freecard .dl{padding:12px}
+    .swipe-hint{margin-top:0;margin-bottom:8px}
+    footer{margin-top:12px}
+  }
+
+  /* ===== Desktop ===== */
+  @media(min-width:880px){
+    .wrap{padding:24px 28px}
+    .game{flex-direction:row;flex-wrap:wrap;justify-content:center;align-items:center;gap:24px;text-align:left}
+    .game .gtext{flex:1;min-width:240px}
+    .game .gtext .intro{margin-top:6px}
+    .game .side{display:flex;flex-direction:column;gap:14px;align-items:stretch;min-width:300px}
+    .game.done .pitch{flex:1;min-width:280px;max-width:420px}
+    /* carrossel volta a ser grade de 3 colunas */
+    .grid{display:grid;grid-template-columns:repeat(3,1fr);gap:16px;overflow:visible;margin:0;padding:0}
+    .carousel.single .grid{display:flex;justify-content:center}
+    .card{flex:none;max-width:none}
+    .carousel.single .card{width:100%;max-width:360px}
+    .dots,.swipe-hint{display:none}
+  }
+</style>
+</head>
+<body>
+<div class="wrap">
+  <header>
+    <div class="brand">Xadrez com <span class="z">Z</span></div>
+  </header>
+
+  <div class="hero">
+    <div class="eyebrow">Xadrez passo a passo</div>
+    <h1>Lições rápidas para <em>você jogar melhor</em></h1>
+    <p class="sub">Um novo conceito a cada lição, em menos de 5 minutos. Resolva o desafio e baixe 3 lições grátis.</p>
+  </div>
+
+  <!-- LIÇÃO DA TORRE -->
+  <div class="game" id="game">
+    <div class="gtext" id="gtext">
+      <h4>Colete as 3 estrelas ★</h4>
+      <p class="intro">A <b>torre</b> move em linha reta. Toque ou arraste para coletar as 3 estrelas e liberar suas lições grátis.</p>
+    </div>
+    <div class="board" id="board"></div>
+
+    <!-- Copy de venda: aparece após concluir o desafio -->
+    <div class="pitch" id="pitch">
+      <div class="pitch-eyebrow">Por que esse método funciona</div>
+      <h4>Cada lição ensina <em>um conceito</em> e te leva ao próximo nível.</h4>
+      <ul class="pitch-list">
+        <li>Lições objetivas, sem enrolação</li>
+        <li>Organizado em sequência: você sempre sabe o próximo passo</li>
+        <li>Construa uma base sólida desde o primeiro movimento</li>
+        <li>Ideal para quem não tem tempo e quer evoluir</li>
+      </ul>
+      <p class="pitch-cta">Gostou das 3 lições grátis? O pacote completo está logo abaixo ↓</p>
+    </div>
+
+    <div class="side">
+      <div class="progress-wrap">
+        <div class="progress-msg" id="msg">Toque na torre para começar</div>
+        <div class="bar"><span id="barFill"></span></div>
+        <div class="stars-count"><b id="cnt">0</b> de 3 estrelas</div>
+      </div>
+      <div class="freecard" id="freecard">
+        <div class="lbl">🎁 Recompensa</div>
+        <div class="ttl">3 lições grátis</div>
+        <div class="desc">Três lições do nível iniciante para você começar agora.</div>
+        <button class="dl" id="dlBtn">Baixar lições grátis</button>
+      </div>
+    </div>
+  </div>
+
+  <!-- PACOTES -->
+  <div class="carousel single">
+  <div class="grid" id="grid">
+    <div class="card featured">
+      <div class="level">0 a 1200 de rating</div>
+      <h3>Iniciante</h3>
+      <div class="price"><span class="old">R$ 47</span><b>R$ 27</b> à vista</div>
+      <button class="buy" id="buyBtn">Comprar pacote</button>
+      <ul class="lessons">
+        <li>Fundamentos Essenciais</li>
+        <li>Criação de planos</li>
+        <li>Tática e Estratégia</li>
+        <li>Aberturas Básicas</li>
+        <li>Técnicas de Xeque-mate e muito mais...</li>
+      </ul>
+      <div class="more highlight">68 lições</div>
+    </div>
+  </div>
+  </div>
+
+  <footer></footer>
+</div>
+
+<script>
+// ===== CONFIG (troque o link depois) =====
+const DOWNLOAD_URL = "https://fhellipeaugusto16.kpages.online/captura"; // link de captura das 3 lições grátis
+const BUY_URL = "https://pay.hotmart.com/C106535296C?off=blnbfb4j&checkoutMode=10"; // checkout Hotmart - pacote Iniciante
+
+const SIZE = 4;
+const board = document.getElementById('board');
+const msgEl = document.getElementById('msg');
+const barEl = document.getElementById('barFill');
+const cntEl = document.getElementById('cnt');
+
+// posição inicial da torre + estrelas (todas alcançáveis por movimentos retos)
+let rook = {r:3, c:0};
+let stars = [ {r:0,c:0}, {r:0,c:3}, {r:3,c:3} ];
+let collected = 0;
+let selected = false;
+let done = false;
+
+// mensagens por nível de progresso
+const MESSAGES = {
+  start:  "Toque na torre para começar",
+  pick:   "Boa! Agora toque numa casa válida ✦",
+  one:    "Ótimo começo! Faltam 2 estrelas",
+  two:    "Quase lá! Falta só 1 estrela",
+  win:    "Missão concluída! Lições liberadas 🎉"
+};
+
+// monta tabuleiro
+const cells=[];
+for(let r=0;r<SIZE;r++)for(let c=0;c<SIZE;c++){
+  const sq=document.createElement('div');
+  sq.className='sq '+(((r+c)%2===0)?'light':'dark');
+  sq.dataset.r=r;sq.dataset.c=c;
+  sq.addEventListener('click',()=>onSquare(r,c));
+  board.appendChild(sq);cells.push(sq);
+}
+const cellAt=(r,c)=>cells[r*SIZE+c];
+const sqPx=()=>cellAt(0,0).offsetWidth;
+
+// estrelas
+function renderStars(){
+  document.querySelectorAll('.star').forEach(s=>s.remove());
+  stars.forEach(st=>{
+    const el=document.createElement('div');
+    el.className='star';el.textContent='★';
+    el.dataset.r=st.r;el.dataset.c=st.c;
+    cellAt(st.r,st.c).appendChild(el);
+  });
+}
+renderStars();
+
+// torre como elemento absoluto
+const rookEl=document.createElement('div');
+rookEl.className='rook';rookEl.textContent='♖';
+board.appendChild(rookEl);
+function placeRook(animate=true){
+  if(!animate) rookEl.style.transition='none';
+  const s=sqPx();
+  rookEl.style.left=(rook.c*s + s/2 - rookEl.offsetWidth/2)+'px';
+  rookEl.style.top =(rook.r*s + s/2 - rookEl.offsetHeight/2)+'px';
+  if(!animate) requestAnimationFrame(()=>rookEl.style.transition='');
+}
+requestAnimationFrame(()=>requestAnimationFrame(()=>placeRook(false)));
+window.addEventListener('resize',()=>placeRook(false));
+
+// (seleção/movimento tratados via clique nas casas e via arrasto da torre)
+
+// casas válidas = mesma linha ou mesma coluna, sem pular estrela? (simples: linha reta livre)
+function validTargets(){
+  const t=[];
+  for(let c=0;c<SIZE;c++) if(c!==rook.c) t.push({r:rook.r,c});
+  for(let r=0;r<SIZE;r++) if(r!==rook.r) t.push({r,c:rook.c});
+  return t;
+}
+function isValid(r,c){
+  return (r===rook.r||c===rook.c) && !(r===rook.r&&c===rook.c);
+}
+function showMoves(){
+  clearMoves();
+  validTargets().forEach(t=>cellAt(t.r,t.c).classList.add('movable'));
+}
+function clearMoves(){document.querySelectorAll('.movable').forEach(s=>s.classList.remove('movable'));}
+
+function onSquare(r,c){
+  if(done||!selected) return;
+  if(!isValid(r,c)) return;        // movimento inválido: ignora
+  selected=false;
+  rookEl.classList.remove('selected');
+  clearMoves();
+  moveTo(r,c);
+}
+
+// move a torre para (r,c), anima e coleta estrela se houver
+function moveTo(r,c){
+  rook={r,c};
+  placeRook(true);
+  const idx=stars.findIndex(s=>s.r===r&&s.c===c);
+  if(idx>-1){
+    const starEl=cellAt(r,c).querySelector('.star');
+    if(starEl){starEl.classList.add('collected');setTimeout(()=>starEl.remove(),450);}
+    stars.splice(idx,1);
+    collected++;
+    updateProgress();
+  }
+}
+
+// ===== Arrastar a torre (mouse + toque) =====
+let dragging=false, moved=false, offX=0, offY=0, wasSelected=false;
+rookEl.addEventListener('pointerdown',e=>{
+  if(done) return;
+  e.preventDefault();
+  dragging=true; moved=false;
+  wasSelected=selected;            // guarda estado antes do gesto
+  rookEl.setPointerCapture(e.pointerId);
+  rookEl.style.transition='none';
+  rookEl.classList.add('selected');
+  if(!selected){ selected=true; showMoves(); if(collected===0) setMsg('pick'); }
+  const pr=rookEl.getBoundingClientRect();
+  offX=e.clientX-pr.left; offY=e.clientY-pr.top;
+});
+rookEl.addEventListener('pointermove',e=>{
+  if(!dragging) return;
+  moved=true;
+  const br=board.getBoundingClientRect();
+  let x=e.clientX-br.left-offX, y=e.clientY-br.top-offY;
+  const max=br.width-rookEl.offsetWidth;
+  x=Math.max(0,Math.min(max,x)); y=Math.max(0,Math.min(max,y));
+  rookEl.style.left=x+'px'; rookEl.style.top=y+'px';
+});
+rookEl.addEventListener('pointerup',e=>{
+  if(!dragging) return;
+  dragging=false;
+  rookEl.style.transition='';
+  // toque sem arrastar: alterna seleção com base no estado anterior ao gesto
+  if(!moved){
+    selected=!wasSelected;
+    rookEl.classList.toggle('selected',selected);
+    if(selected){ showMoves(); if(collected===0) setMsg('pick'); }
+    else clearMoves();
+    return;
+  }
+  // descobre a casa mais próxima de onde soltou
+  const s=sqPx();
+  const cx=parseFloat(rookEl.style.left)+rookEl.offsetWidth/2;
+  const cy=parseFloat(rookEl.style.top)+rookEl.offsetHeight/2;
+  let c=Math.max(0,Math.min(SIZE-1,Math.floor(cx/s)));
+  let r=Math.max(0,Math.min(SIZE-1,Math.floor(cy/s)));
+  if(isValid(r,c)){
+    selected=false; rookEl.classList.remove('selected'); clearMoves();
+    moveTo(r,c);
+  } else {
+    // solto em casa inválida: volta pra posição atual
+    placeRook(true);
+  }
+});
+
+function setMsg(key){msgEl.textContent=MESSAGES[key];}
+function updateProgress(){
+  cntEl.textContent=collected;
+  barEl.style.width=(collected/3*100)+'%';
+  if(collected===1) setMsg('one');
+  else if(collected===2) setMsg('two');
+  else if(collected>=3) finish();
+}
+
+function finish(){
+  done=true;
+  setMsg('win');
+  document.getElementById('freecard').classList.add('win');
+  document.getElementById('game').classList.add('done');
+  if(window.matchMedia('(max-width:600px)').matches){
+    // espera o layout do estado concluído assentar antes de calcular/rolar
+    setTimeout(softScrollToReward,700);
+  }
+}
+
+// rolagem suave própria que recalcula o alvo a cada frame,
+// acompanhando mudanças de viewport (barra de endereço do Chrome mobile)
+function softScrollToReward(){
+  const fc=document.getElementById('freecard');
+  const GAP=16;                 // folga acima da recompensa, para não colar/cortar
+  const DUR=600;                // duração da animação (ms)
+  const start=performance.now();
+  const from=window.pageYOffset;
+
+  // alvo inicial calculado com o layout já estável
+  function targetNow(){
+    const top=fc.getBoundingClientRect().top + window.pageYOffset - GAP;
+    const max=document.documentElement.scrollHeight - window.innerHeight;
+    return Math.max(0, Math.min(top, max));
+  }
+  const to=targetNow();
+  if(Math.abs(to-from) < 6) return; // já está enquadrado, nada a fazer
+
+  function tick(now){
+    const p=Math.min(1,(now-start)/DUR);
+    const e=p<.5 ? 2*p*p : 1-Math.pow(-2*p+2,2)/2; // easeInOutQuad
+    window.scrollTo(0, from+(to-from)*e);
+    if(p<1){
+      requestAnimationFrame(tick);
+    } else {
+      // correção final: se a viewport mudou no meio do caminho, reenquadra sem cortar
+      const corrected=targetNow();
+      if(Math.abs(corrected-window.pageYOffset) > 8){
+        window.scrollTo({top:corrected, behavior:'smooth'});
+      }
+    }
+  }
+  requestAnimationFrame(tick);
+}
+document.getElementById('dlBtn').addEventListener('click',()=>{
+  if(DOWNLOAD_URL && DOWNLOAD_URL!=="#"){window.open(DOWNLOAD_URL,'_blank','noopener');}
+});
+
+const buyBtn=document.getElementById('buyBtn');
+if(buyBtn){buyBtn.addEventListener('click',()=>{
+  if(BUY_URL && BUY_URL!=="#"){window.open(BUY_URL,'_blank','noopener');}
+});}
+
+// ===== Carrossel de pacotes (mobile) =====
+(function(){
+  const grid=document.getElementById('grid');
+  const dots=Array.from(document.querySelectorAll('#dots button'));
+  const cards=Array.from(grid.children);
+  if(!grid||!cards.length) return;
+
+  function activeIndex(){
+    const center=grid.scrollLeft+grid.clientWidth/2;
+    let best=0,bestD=Infinity;
+    cards.forEach((c,i)=>{
+      const cc=c.offsetLeft+c.offsetWidth/2;
+      const d=Math.abs(cc-center);
+      if(d<bestD){bestD=d;best=i;}
+    });
+    return best;
+  }
+  function sync(){
+    const i=activeIndex();
+    dots.forEach((d,k)=>d.classList.toggle('active',k===i));
+  }
+  function scrollTo(i){
+    const c=cards[i];
+    grid.scrollTo({left:c.offsetLeft-(grid.clientWidth-c.offsetWidth)/2,behavior:'smooth'});
+  }
+  dots.forEach(d=>d.addEventListener('click',()=>scrollTo(+d.dataset.i)));
+  let t;grid.addEventListener('scroll',()=>{clearTimeout(t);t=setTimeout(sync,60);});
+
+  // no mobile, centraliza o card em destaque
+  function init(){
+    if(cards.length>1 && window.matchMedia('(max-width:879px)').matches){
+      grid.scrollLeft=cards[1].offsetLeft-(grid.clientWidth-cards[1].offsetWidth)/2;
+    }
+    sync();
+  }
+  requestAnimationFrame(()=>requestAnimationFrame(init));
+  window.addEventListener('resize',sync);
+})();
+</script>
+</body>
+</html>
