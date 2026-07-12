@@ -225,6 +225,11 @@ já está marcado no código (procure por fbq('track','InitiateCheckout')). -->
   .tag{position:absolute;top:-10px;right:18px;background:var(--gold);color:#15130b;font-size:.66rem;font-weight:700;letter-spacing:1px;padding:4px 11px;border-radius:999px;text-transform:uppercase}
   .includes{font-size:.78rem;color:var(--gold-soft);font-weight:600;margin-bottom:8px;display:flex;align-items:center;gap:6px}
   .includes::before{content:"✓";font-weight:700}
+
+  /* card de pré-venda */
+  .card.presale{position:relative;border-color:rgba(201,168,76,.35)}
+  .presale-tag{position:absolute;top:-1px;right:14px;background:var(--gold);color:#15130b;font-size:.62rem;font-weight:800;letter-spacing:1.2px;text-transform:uppercase;padding:4px 10px;border-radius:0 0 8px 8px}
+  .presale-note{color:var(--gold-soft) !important;font-weight:600;text-align:center;padding-left:0 !important}
   .lessons{list-style:none;display:flex;flex-direction:column;gap:8px}
   .lessons li{font-size:.86rem;color:#c9c9d2;display:flex;align-items:center;gap:9px;line-height:1.25}
   .lessons li::before{content:"";width:6px;height:6px;border-radius:50%;background:var(--gold);flex:none}
@@ -334,7 +339,7 @@ já está marcado no código (procure por fbq('track','InitiateCheckout')). -->
     .game .side{display:flex;flex-direction:column;gap:14px;align-items:stretch;min-width:300px}
     .game.done .pitch{flex:1;min-width:280px;max-width:420px}
     /* carrossel volta a ser grade de 3 colunas */
-    .grid{display:grid;grid-template-columns:repeat(3,1fr);gap:16px;overflow:visible;margin:0;padding:0}
+    .grid{display:grid;grid-template-columns:repeat(3,minmax(0,320px));justify-content:center;gap:16px;overflow:visible;margin:0;padding:0}
     .carousel.single .grid{display:flex;justify-content:center}
     .card{flex:none;max-width:none}
     .carousel.single .card{width:100%;max-width:360px}
@@ -400,7 +405,8 @@ já está marcado no código (procure por fbq('track','InitiateCheckout')). -->
   </div>
 
   <!-- PACOTES -->
-  <div class="carousel single">
+  <div class="carousel">
+  <p class="swipe-hint">← deslize para ver os pacotes →</p>
   <div class="grid" id="grid">
     <div class="card featured">
       <div class="level">0 a 1200 de rating</div>
@@ -418,6 +424,47 @@ já está marcado no código (procure por fbq('track','InitiateCheckout')). -->
       </ul>
       <div class="more highlight">68 lições</div>
     </div>
+
+    <div class="card presale">
+      <div class="presale-tag">Pré-venda</div>
+      <div class="level">1200 a 1900 de rating</div>
+      <h3>Intermediário</h3>
+      <div class="launch">Preço de pré-lançamento</div>
+      <div class="price"><span class="old">R$ 97</span><b>R$ 47</b> à vista</div>
+      <button class="buy" id="buyBtnInter">Garantir na pré-venda</button>
+      <div class="guarantee">🛡️ Garantia de 7 dias · acesso vitalício conforme o pacote cresce</div>
+      <div class="includes">Tudo do Iniciante +</div>
+      <ul class="lessons">
+        <li>Táticas combinadas e sacrifícios</li>
+        <li>Domínio de colunas e casas fracas</li>
+        <li>Estruturas de peões</li>
+        <li>Finais essenciais e muito mais...</li>
+      </ul>
+      <div class="more presale-note">✦ Novas lições toda semana</div>
+    </div>
+
+    <div class="card presale">
+      <div class="presale-tag">Pré-venda</div>
+      <div class="level">1900 a 2400+ de rating</div>
+      <h3>Avançado</h3>
+      <div class="launch">Preço de pré-lançamento</div>
+      <div class="price"><span class="old">R$ 197</span><b>R$ 97</b> à vista</div>
+      <button class="buy" id="buyBtnAdv">Garantir na pré-venda</button>
+      <div class="guarantee">🛡️ Garantia de 7 dias · acesso vitalício conforme o pacote cresce</div>
+      <div class="includes">Tudo do Iniciante e Intermediário +</div>
+      <ul class="lessons">
+        <li>Sacrifícios posicionais</li>
+        <li>Profilaxia e manobras de longo prazo</li>
+        <li>Finais teóricos complexos</li>
+        <li>Preparação de aberturas e muito mais...</li>
+      </ul>
+      <div class="more presale-note">✦ Novas lições toda semana</div>
+    </div>
+  </div>
+  <div class="dots" id="dots">
+    <button data-i="0" aria-label="Iniciante"></button>
+    <button data-i="1" aria-label="Intermediário"></button>
+    <button data-i="2" aria-label="Avançado"></button>
   </div>
   </div>
 
@@ -474,6 +521,8 @@ já está marcado no código (procure por fbq('track','InitiateCheckout')). -->
 // ===== CONFIG (troque o link depois) =====
 const DOWNLOAD_URL = "https://fhellipeaugusto16.kpages.online/captura"; // link de captura das 3 lições grátis
 const BUY_URL = "https://pay.hotmart.com/C106535296C?off=blnbfb4j&checkoutMode=10"; // checkout Hotmart - pacote Iniciante
+const BUY_URL_INTER = "https://pay.hotmart.com/C106535296C?off=7jqebd9g"; // checkout Hotmart - pré-venda Intermediário
+const BUY_URL_ADV = "https://pay.hotmart.com/C106535296C?off=30zcta2k"; // checkout Hotmart - pré-venda Avançado
 
 const SIZE = 4;
 const board = document.getElementById('board');
@@ -862,6 +911,18 @@ if(buyBtn){buyBtn.addEventListener('click',()=>{
   if(BUY_URL && BUY_URL!=="#"){window.open(BUY_URL,'_blank','noopener');}
 });}
 
+const buyBtnInter=document.getElementById('buyBtnInter');
+if(buyBtnInter){buyBtnInter.addEventListener('click',()=>{
+  if(typeof fbq==='function') fbq('track','InitiateCheckout',{value:47,currency:'BRL'});
+  if(BUY_URL_INTER && BUY_URL_INTER!=="#"){window.open(BUY_URL_INTER,'_blank','noopener');}
+});}
+
+const buyBtnAdv=document.getElementById('buyBtnAdv');
+if(buyBtnAdv){buyBtnAdv.addEventListener('click',()=>{
+  if(typeof fbq==='function') fbq('track','InitiateCheckout',{value:97,currency:'BRL'});
+  if(BUY_URL_ADV && BUY_URL_ADV!=="#"){window.open(BUY_URL_ADV,'_blank','noopener');}
+});}
+
 // ===== Carrossel de pacotes (mobile) =====
 (function(){
   const grid=document.getElementById('grid');
@@ -890,11 +951,8 @@ if(buyBtn){buyBtn.addEventListener('click',()=>{
   dots.forEach(d=>d.addEventListener('click',()=>scrollTo(+d.dataset.i)));
   let t;grid.addEventListener('scroll',()=>{clearTimeout(t);t=setTimeout(sync,60);});
 
-  // no mobile, centraliza o card em destaque
+  // no mobile, começa no card Iniciante (produto pronto e principal)
   function init(){
-    if(cards.length>1 && window.matchMedia('(max-width:879px)').matches){
-      grid.scrollLeft=cards[1].offsetLeft-(grid.clientWidth-cards[1].offsetWidth)/2;
-    }
     sync();
   }
   requestAnimationFrame(()=>requestAnimationFrame(init));
@@ -903,4 +961,3 @@ if(buyBtn){buyBtn.addEventListener('click',()=>{
 </script>
 </body>
 </html>
-
